@@ -23,14 +23,17 @@ export default class Order extends React.Component {
   render(){
     return(
       <View style={styles.container}>
-        <Text style={styles.ordNum}>Thank you! Your Order Number is
-          <Text style={{fontWeight: 'bold'}} fontSize={220}> 1738</Text>
-        </Text>
+        <Image
+          source={require('../assets/pickup.png')}
+          style={styles.pickup}
+        />
       </View>
     )
   }
 
 }
+
+
 
 
 // ************************************************************
@@ -41,7 +44,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
+
   },
   ordNum:{
     fontSize: 30,
@@ -54,5 +59,10 @@ const styles = StyleSheet.create({
     height: 90,
     width: 90,
     //backgroundColor: "blue",
+  },
+  pickup:{
+    flex:1,
+    resizeMode:"contain",
+
   },
 });

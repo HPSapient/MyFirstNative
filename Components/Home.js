@@ -16,9 +16,9 @@ import{
 // ************          Data   *************************
 // ************************************************************
 let groceryList = [
-  "Cheese Burger",
-  "French Fries",
-  "Coke",
+  "Bacon Cheeseburger",
+  "Medium French Fries",
+  "Medium Coke",
 ]
 
 let token = ""
@@ -39,7 +39,7 @@ export default class Home extends React.Component {
     return(
       list.map(
         (listElement, i) =>
-          <View key={i}>
+          <View key={i} style={styles.container}>
             <Text style={styles.groceryItem}>{listElement}</Text>
           </View>
       )
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     paddingLeft:80,
     paddingRight:80,
     paddingBottom:25,
-    backgroundColor:'gold',
+    backgroundColor:'#ffc300',
     borderRadius:10,
     borderWidth: 1,
     borderColor: '#fff'
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   aButton:{
     marginRight:10,
     marginLeft:10,
-    marginTop:25,
+    marginTop:40,
 
   },
   aText:{
