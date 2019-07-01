@@ -7,7 +7,9 @@ import{
   Button,
   TouchableOpacity,
   StatusBar } from 'react-native';
-  import { Permissions, Notifications } from 'expo';
+  import { Notifications, Location, TaskManager } from 'expo';
+  import * as Permissions from 'expo-permissions';
+
 
 
 
@@ -16,15 +18,29 @@ import{
   // ************************************************************
   import Home from './Components/Home'
   import Order from './Components/Order'
+  import Main from './Components/Main'
+  import Lock from './Components/Lock'
+  import Edit from './Components/Edit'
 
   import { createStackNavigator, createAppContainer } from 'react-navigation'
 
   const RootStack = createStackNavigator({
+      Lock: Lock,
       Home: Home,
       Order: Order,
+      Main: Main,
+      Edit: Edit,
   } )
 
 export default class App extends React.Component {
+
+
+
+  // componentDidMount = async() => {
+  //   await Location.startLocationUpdatesAsync('firstTask', {
+  //     accuracy: Location.Accuracy.Balanced,
+  //   });
+  // }
 
   render(){
     return(
@@ -34,6 +50,19 @@ export default class App extends React.Component {
 }
 
 const AppContainer = createAppContainer(RootStack)
+
+
+// TaskManager.defineTask('firstTask', ({ data, error }) => {
+//   if (error) {
+//     // Error occurred - check `error.message` for more details.
+//     return;
+//   }
+//   if (data) {
+//     const { locations } = data;
+//     // do something with the locations captured in the background
+//     console.log('locations', locations)
+//   }
+// });
 
 
 // ************************************************************

@@ -24,7 +24,17 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
-    }
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Use loc in use",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "use loc in always",
+        "NSLocationAlwaysUsageDescription": "use always",
+        "UIBackgroundModes": [
+          "location",
+          "fetch"
+        ]
+      }
+    },
+    "description": ""
   }
 }

@@ -7,7 +7,10 @@ import{
   Button,
   TouchableOpacity,
   StatusBar } from 'react-native';
-  import { Permissions, Notifications } from 'expo';
+  import { Notifications, Location, TaskManager } from 'expo';
+  import * as Permissions from 'expo-permissions';
+
+  import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
   import LogoTitle from './Header'
 
@@ -15,10 +18,16 @@ import{
 // ************************************************************
 // ************          Data   *************************
 // ************************************************************
-let groceryList = [
+let theUsual = [
   "Bacon Cheeseburger",
   "Medium French Fries",
   "Medium Coke",
+]
+
+let users = [
+  "Sam",
+  "Tom",
+  "Ned",
 ]
 
 let token = ""
@@ -30,17 +39,20 @@ let token = ""
 
 export default class Home extends React.Component {
 
+  state = {
+      user: 'Sam', // make this a call to database to get curr user
+    };
+
   static navigationOptions = {
     headerTitle: <LogoTitle />,
   };
-
 
   createElementsFromList(list) {
     return(
       list.map(
         (listElement, i) =>
           <View key={i} style={styles.container}>
-            <Text style={styles.groceryItem}>{listElement}</Text>
+            <Text style={styles.theUsualTextStyle}>{listElement}</Text>
           </View>
       )
     )
@@ -79,6 +91,15 @@ export default class Home extends React.Component {
 
     }
 
+  registerForLocationsAsync = async() => {
+
+    let permit = await Permissions.askAsync(Permissions.LOCATION);
+    //alert(JSON.stringify(permit));
+
+    console.log("I got location permission");
+
+  }
+
 
 
 
@@ -88,6 +109,7 @@ export default class Home extends React.Component {
   // ************************************************************
   async componentDidMount(){
     await this.registerForPushNotificationsAsync();
+    await this.registerForLocationsAsync();
 
   }
 
@@ -115,11 +137,14 @@ export default class Home extends React.Component {
   //   />
   // </View>
 
+
   render(){
+
+
     return (
         <View style={styles.container}>
           <View>
-            <Text style={styles.h}>Welcome Back! Would you like your usual?</Text>
+            <Text style={styles.h}>Welcome back {this.state.user}! {'\n'}Would you like your usual?</Text>
           </View>
 
           <View style={styles.container}>
@@ -127,7 +152,7 @@ export default class Home extends React.Component {
               source={require('../assets/food.png')}
               style={styles.foodImg}
             />
-            {this.createElementsFromList(groceryList)}
+            {this.createElementsFromList(theUsual)}
           </View>
 
           <View style={styles.container}>
@@ -143,15 +168,20 @@ export default class Home extends React.Component {
 
             <TouchableOpacity
               style={styles.aButton}
-              onPress={()=> this.sendPushNotification()}
-              //onPress={() => navigate('HomeScreen')}
+              //onPress={()=> this.sendPushNotification()}
+              onPress={
+                () => this.props.navigation.navigate( 'Edit' )
+                //() => this.switchUser()
+              }
               underlayColor='#fff'>
               <Text style={styles.aText}>Edit Order</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.aButton}
-              //onPress={() => navigate('HomeScreen')}
+              onPress={
+                () => this.props.navigation.navigate( 'Main' )
+              }
               underlayColor='#fff'>
               <Text style={styles.aText}>New Order</Text>
             </TouchableOpacity>
@@ -173,11 +203,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
-  groceryItem:{
-    fontSize: 30,
-    fontFamily: 'HelveticaNeue-Light',// sans-serif,
+  theUsualTextStyle:{
+    textAlign: 'center',
+    fontSize: hp('3%'),
+    flex: 1,
+    fontFamily: 'HelveticaNeue',// sans-serif,
+    //borderColor: 'black',
+    //borderWidth: 1,
     //backgroundColor: "grey",
-    margin: 1,
   },
   header:{
     alignItems: 'center',
@@ -188,35 +221,33 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
   },
   h:{
-    fontSize: 20,
+    fontSize: hp('2.5%'),
     fontFamily: 'HelveticaNeue-UltraLight',// sans-serif,
     //backgroundColor: "grey",
-    padding: 1,
-    marginTop: 25,
+    marginTop: hp('2%'),
+    textAlign: 'center',
   },
   logo:{
-    height: 40,
-    width: 40,
-    marginTop: 40,
-    marginBottom: 10,
+    height: hp('2%'),
+    width: wp('2%'),
+    marginTop: hp('2%'),
+    marginBottom: hp('0.5%'),
     //backgroundColor: "blue",
   },
   foodImg:{
-    height: 150,
-    width: 150,
-    marginTop: 40,
-    marginBottom: 10,
+    height: hp('28%'),
+    width: hp('28%'),
+    marginTop: hp('1%'),
+    //marginBottom: hp('0.2%'),
     //backgroundColor: "blue",
 
   },
   orderButton:{
-    marginRight:10,
-    marginLeft:10,
-    marginTop:15,
-    paddingTop:25,
-    paddingLeft:80,
-    paddingRight:80,
-    paddingBottom:25,
+    marginTop:hp('1.5%'),
+    paddingTop:hp('4%'),
+    paddingLeft:wp('33%'),
+    paddingRight:wp('33%'),
+    paddingBottom:hp('4%'),
     backgroundColor:'#ffc300',
     borderRadius:10,
     borderWidth: 1,
@@ -225,23 +256,18 @@ const styles = StyleSheet.create({
   orderText:{
       color:'#fff',
       textAlign:'center',
-      paddingLeft : 10,
-      paddingRight : 10,
       color:'black',
-      fontSize:25,
+      fontSize: hp('4.1%'),
 
   },
   aButton:{
-    marginRight:10,
-    marginLeft:10,
-    marginTop:40,
-
+    marginTop:hp('5%'),
   },
   aText:{
       color:'#fff',
       textAlign:'center',
       color:'black',
-      fontSize:20,
+      fontSize:hp('2.5%'),
       textDecorationLine: 'underline',
   },
 });

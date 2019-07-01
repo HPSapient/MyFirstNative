@@ -1,13 +1,15 @@
 import React from 'react';
 import{
   Image,
+  ImageBackground,
   StyleSheet,
   Text,
   View,
   Button,
   TouchableOpacity,
   StatusBar } from 'react-native';
-  import { Permissions, Notifications } from 'expo';
+  import { Notifications } from 'expo';
+  import * as Permissions from 'expo-permissions';
 
   import LogoTitle from './Header'
 
@@ -23,10 +25,19 @@ export default class Order extends React.Component {
   render(){
     return(
       <View style={styles.container}>
-        <Image
+        <ImageBackground
           source={require('../assets/pickup.png')}
           style={styles.pickup}
-        />
+        >
+          <TouchableOpacity
+            style={styles.orderButton}
+            onPress={
+              () => this.props.navigation.navigate( 'Main' )
+            }
+            //onPress={() => navigate('HomeScreen')}
+            underlayColor='#fff'>
+          </TouchableOpacity>
+        </ImageBackground>
       </View>
     )
   }
@@ -61,8 +72,32 @@ const styles = StyleSheet.create({
     //backgroundColor: "blue",
   },
   pickup:{
-    flex:1,
-    resizeMode:"contain",
+    flex: 1,
+    alignSelf: 'stretch',
+    width: undefined,
+    height: undefined,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+
+  },
+  orderButton:{
+    alignSelf: 'stretch',
+    paddingTop:40,
+    paddingLeft:90,
+    paddingRight:90,
+    paddingBottom:25,
+    backgroundColor:'white',
+    borderRadius:10,
+    borderColor: 'black',
+    opacity: 0,
+  },
+  orderText:{
+      color:'#fff',
+      textAlign:'center',
+      paddingLeft : 10,
+      paddingRight : 10,
+      color:'black',
+      fontSize:25,
 
   },
 });
