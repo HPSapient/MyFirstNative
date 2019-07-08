@@ -7,6 +7,7 @@ import{
   View,
   Button,
   TouchableOpacity,
+  AsyncStorage,
   StatusBar } from 'react-native';
   import { Notifications } from 'expo';
   import * as Permissions from 'expo-permissions';
@@ -23,8 +24,8 @@ import{
     { latitude: 41.884630, longitude: -87.628950},
 
     //Sapient
-    //{ latitude: 41.886908563672634, longitude: -87.62846003453808},
-    //{ latitude: 41.88718464091348, longitude:  -87.62842929529477 },
+    { latitude: 41.886908563672634, longitude: -87.62846003453808},
+    { latitude: 41.88718464091348, longitude:  -87.62842929529477 },
   ]
 
 // ************************************************************
@@ -42,7 +43,9 @@ export default class Lock extends React.Component {
       error: null,
       inFence: false,
       inFenceSpoof: false,
-      user: 'Sam', // make this a call to database to get curr user
+      user: 10, // make this a call to database to get curr user. SuperUser: 10 has southwest buttermilk everywhere
+      dataSource:[],
+
     };
 
   spoofFence() {
@@ -53,30 +56,63 @@ export default class Lock extends React.Component {
   }
 
 
+
   getByProximity(startPoint) {
       var maxDistanceInKM = 0.15;
 
       // results is an array of points that are within the maxDistanceInKM
-      var result = Geofence.filterByProximity(startPoint, points, maxDistanceInKM);
-      //if we are in geofence
-      if (result.length > 0){ // !!!!!!!!!!!!!!!!!!!!!!!!!!!!! add test to see if results[0] is in the users list of locations
-        console.log('Fence Triggered.');
-        var distance = result[0].distanceInKM;
-        console.log('Distance:');
-        console.log(distance);
-        this.setState({
-          inFence: true,
-        });
-        this.render()
+      var result = Geofence.filterByProximity(startPoint, this.state.dataSource, maxDistanceInKM); // use points, maxDistanceInKM); for testing
+
+      // API call to see if there are any recommended meals in the results
+      if (result.length > 0){ //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!allow sppofing, if fixed, only updates when fence triggered!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        var items =[];
+        //set a variable to be the first element of results, then use it for the call
+        fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/favmeal/meal/?uid=" + this.state.user + "&gps=0&loc_id=3") // hardcoding location for testing (3 and 4 have res), switch to current location
+          .then(response => response.json())
+          .then((responseJson)=> {
+            //console.log('\nResponse from location call');
+            //console.log(responseJson);
+            if (responseJson['data']['meal']){
+              items = Object.keys(responseJson['data']['meal']['contents']);
+            }
+
+
+            console.log('items');
+            console.log(items);
+            // console.log('items length');
+            // console.log(items.length);
+
+            //Store the found meal, if none store a blank array
+            AsyncStorage.setItem('fence', JSON.stringify(items));
+            console.log('Storing');
+            console.log(items);
+
+            // if rec exists for the fence were in
+            if (items.length > 0){
+              console.log('Fence Triggered.');
+              var distance = result[0].distanceInKM;
+              console.log('Distance:');
+              console.log(distance);
+              this.setState({
+                inFence: true,
+              });
+              this.render()
+            }
+            else{
+              this.setState({
+                inFence: false
+              });
+              this.render()
+            }
+            console.log('result length:');
+            console.log(result.length);
+
+
+          })
+          .catch(error=>console.log(error))
       }
-      else{
-        this.setState({
-          inFence: false,
-        });
-        this.render()
-      }
-      console.log('result length:');
-      console.log(result.length);
+
+
   }
 
 
@@ -102,6 +138,28 @@ export default class Lock extends React.Component {
         (error) => this.setState({ error: error.message }),
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, distanceFilter: 1 },
       );
+
+      fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/locations/")
+        .then(response => response.json())
+        .then((responseJson)=> {
+          //console.log('\n!!!');
+          //console.log(responseJson['data'][0]['lat']);
+          var locs = []
+          for (var i = 0; i < responseJson['data'].length; i++){
+            //console.log(responseJson['data'][i]['lat'], responseJson['data'][i]['lng']);
+            //console.log('\n');
+            locs.push({latitude: responseJson['data'][i]['lat'], longitude: responseJson['data'][i]['lng']});
+          }
+          // console.log('locs');
+          // console.log(locs);
+          this.setState({
+            dataSource: locs,
+          })
+           console.log('datasource -- ');
+           console.log(this.state.dataSource);
+        })
+        .catch(error=>console.log(error)) //to catch the errors if any
+
     }
 
     componentWillUnmount() {
@@ -193,6 +251,7 @@ export default class Lock extends React.Component {
       <View style={styles.container}>
         <ImageBackground
           source={require('../assets/lock.png')}
+          resizeMode= 'stretch'
           style={styles.lockBack}
         >
           <View style={styles.container}>
@@ -250,7 +309,7 @@ const styles = StyleSheet.create({
     height: hp('100%'),
     width: wp('100%'),
     alignItems: 'center',
-    resizeMode: 'stretch',
+    //resizeMode: 'stretch',
     justifyContent: 'flex-start',
   },
   notificationButton:{

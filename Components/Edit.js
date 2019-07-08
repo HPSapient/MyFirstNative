@@ -64,10 +64,10 @@ const styles = StyleSheet.create({
     //backgroundColor: "blue",
   },
   pickup:{
-    flex: 1,
-    alignSelf: 'stretch',
-    width: undefined,
-    height: undefined,
+    //flex: 1,
+    resizeMode: 'stretch',
+    width: '100%',
+    height: '100%',
 
   },
 });

@@ -11,6 +11,9 @@ import{
   import { Notifications } from 'expo';
   import * as Permissions from 'expo-permissions';
 
+  import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
+
+
   import LogoTitle from './Header'
 
 // ************************************************************
@@ -28,6 +31,7 @@ export default class Order extends React.Component {
         <ImageBackground
           source={require('../assets/pickup.png')}
           style={styles.pickup}
+          resizeMode={'stretch'}
         >
           <TouchableOpacity
             style={styles.orderButton}
@@ -90,6 +94,7 @@ const styles = StyleSheet.create({
     borderRadius:10,
     borderColor: 'black',
     opacity: 0,
+    
   },
   orderText:{
       color:'#fff',

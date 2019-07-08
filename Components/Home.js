@@ -6,6 +6,8 @@ import{
   View,
   Button,
   TouchableOpacity,
+  ScrollView,
+  AsyncStorage,
   StatusBar } from 'react-native';
   import { Notifications, Location, TaskManager } from 'expo';
   import * as Permissions from 'expo-permissions';
@@ -41,6 +43,7 @@ export default class Home extends React.Component {
 
   state = {
       user: 'Sam', // make this a call to database to get curr user
+      items: [],
     };
 
   static navigationOptions = {
@@ -51,8 +54,8 @@ export default class Home extends React.Component {
     return(
       list.map(
         (listElement, i) =>
-          <View key={i} style={styles.container}>
-            <Text style={styles.theUsualTextStyle}>{listElement}</Text>
+          <View key={i} style={styles.info}>
+            <Text style={styles.theUsualTextStyle} allowFontScaling={false}>{listElement}</Text>
           </View>
       )
     )
@@ -111,6 +114,34 @@ export default class Home extends React.Component {
     await this.registerForPushNotificationsAsync();
     await this.registerForLocationsAsync();
 
+    //replace by storing meal locally on lock
+    console.log('retrieving');
+    AsyncStorage.getItem('fence').then((value) =>
+      this.setState({
+        items:JSON.parse(value),
+      })
+    );
+
+
+  //   var items =[];
+  //   fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/favmeal/meal/?uid=3&gps=0&loc_id=3")
+  //     .then(response => response.json())
+  //     .then((responseJson)=> {
+  //       //console.log('\nResponse from location call');
+  //       //console.log(responseJson);
+  //       if (responseJson['data']['meal']){
+  //         items = Object.keys(responseJson['data']['meal']['contents']);
+  //       }
+  //
+  //       console.log('Home: items');
+  //       console.log(items);
+  //
+  //       //testing itemStore
+  //
+  //
+  //     })
+  //     .catch(error=>console.log(error))
+  //
   }
 
   sendPushNotification = () => {
@@ -152,10 +183,12 @@ export default class Home extends React.Component {
               source={require('../assets/food.png')}
               style={styles.foodImg}
             />
-            {this.createElementsFromList(theUsual)}
+            <ScrollView>
+              {this.createElementsFromList(this.state.items)}
+            </ScrollView>
           </View>
 
-          <View style={styles.container}>
+          <View style={styles.containerSmall}>
             <TouchableOpacity
               style={styles.orderButton}
               onPress={
@@ -203,13 +236,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start',
   },
+  containerSmall: {
+    flex: 0.78,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  info: {
+    width: wp('100%'),
+    flexDirection: 'row',
+
+    //alignItems: 'center',
+  },
   theUsualTextStyle:{
     textAlign: 'center',
     fontSize: hp('3%'),
+    paddingBottom: hp('2%'),
+    paddingLeft: hp('3%'),
+    paddingRight: hp('3%'),
+    width: 0,
+    flexGrow: 1,
     flex: 1,
+
     fontFamily: 'HelveticaNeue',// sans-serif,
-    //borderColor: 'black',
-    //borderWidth: 1,
+    borderColor: 'black',
+    //borderWidth: 0.2,
     //backgroundColor: "grey",
   },
   header:{
@@ -250,8 +301,12 @@ const styles = StyleSheet.create({
     paddingBottom:hp('4%'),
     backgroundColor:'#ffc300',
     borderRadius:10,
-    borderWidth: 1,
-    borderColor: '#fff'
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 1,
+    elevation: 1,
+
   },
   orderText:{
       color:'#fff',
@@ -261,7 +316,7 @@ const styles = StyleSheet.create({
 
   },
   aButton:{
-    marginTop:hp('5%'),
+    marginTop:hp('3%'),
   },
   aText:{
       color:'#fff',

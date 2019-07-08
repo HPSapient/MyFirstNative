@@ -10,6 +10,8 @@ import{
   import { Notifications } from 'expo';
   import * as Permissions from 'expo-permissions';
 
+  import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
+
   import LogoTitle from './Header'
 
 // ************************************************************
@@ -64,10 +66,10 @@ const styles = StyleSheet.create({
     //backgroundColor: "blue",
   },
   pickup:{
-    flex: 1,
-    alignSelf: 'stretch',
-    width: undefined,
-    height: undefined,
+    //flex: 1,
+    resizeMode: 'stretch',
+    width: '100%',
+    height: '100%',
 
   },
 });
