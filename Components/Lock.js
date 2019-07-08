@@ -55,6 +55,20 @@ export default class Lock extends React.Component {
 
   }
 
+  switchUser() {
+    this.setState({
+      user: this.state.user != 10 ? this.state.user + 1 : 1
+    }
+    , () => {
+      var start = {
+        latitude: this.state.latitude,
+        longitude: this.state.longitude
+      };
+      this.getByProximity(start);
+    });
+
+  }
+
 
 
   getByProximity(startPoint) {
@@ -64,7 +78,7 @@ export default class Lock extends React.Component {
       var result = Geofence.filterByProximity(startPoint, this.state.dataSource, maxDistanceInKM); // use points, maxDistanceInKM); for testing
 
       // API call to see if there are any recommended meals in the results
-      if (result.length > 0){ //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!allow sppofing, if fixed, only updates when fence triggered!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      if (result.length > 0){
         var items =[];
         //set a variable to be the first element of results, then use it for the call
         fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/favmeal/meal/?uid=" + this.state.user + "&gps=0&loc_id=3") // hardcoding location for testing (3 and 4 have res), switch to current location
@@ -117,8 +131,29 @@ export default class Lock extends React.Component {
 
 
 
-
     componentDidMount() {
+      //set initial position, check for fence
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          this.setState({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            error: null,
+          });
+          console.log('\n\n');
+          console.log(position.coords.latitude);
+          console.log(position.coords.longitude);
+          var start = {
+            latitude: this.state.latitude,
+            longitude: this.state.longitude
+          };
+          this.getByProximity(start);
+        },
+        (error) => this.setState({ error: error.message }),
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, distanceFilter: 1 },
+      );
+
+      //update location on move, check for fence
       this.watchId = navigator.geolocation.watchPosition(
         (position) => {
           this.setState({
@@ -139,6 +174,7 @@ export default class Lock extends React.Component {
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000, distanceFilter: 1 },
       );
 
+      //pull all fences from api
       fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/locations/")
         .then(response => response.json())
         .then((responseJson)=> {
@@ -256,6 +292,12 @@ export default class Lock extends React.Component {
         >
           <View style={styles.container}>
             {notification}
+            <TouchableOpacity
+              style={styles.switchUser}
+              onPress={() => this.switchUser()}
+              underlayColor='#fff'>
+              <Text style={styles.spoofText}>{this.state.user}</Text>
+            </TouchableOpacity>
             {spoofButton}
           </View>
         </ImageBackground>
@@ -369,6 +411,12 @@ const styles = StyleSheet.create({
   spoofButtonOn:{
     marginBottom: hp('7.35%'),
     backgroundColor:'green',
+    borderRadius:100,
+    opacity: 0.65,
+  },
+  switchUser:{
+    marginBottom: hp('0.8%'),
+    backgroundColor:'white',
     borderRadius:100,
     opacity: 0.65,
   },
