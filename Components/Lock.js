@@ -12,6 +12,8 @@ import{
   import { Notifications } from 'expo';
   import * as Permissions from 'expo-permissions';
 
+  import Sliders from "react-native-slider";
+
   import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
   import Geofence from 'react-native-expo-geofence';
@@ -43,10 +45,14 @@ export default class Lock extends React.Component {
       error: null,
       inFence: false,
       inFenceSpoof: false,
-      user: 10, // make this a call to database to get curr user. SuperUser: 10 has southwest buttermilk everywhere
+      user: 1,
       dataSource:[],
 
     };
+
+    // ************************************************************
+    // ************          Class functions   *******************
+    // ************************************************************
 
   spoofFence() {
     this.setState({
@@ -57,7 +63,7 @@ export default class Lock extends React.Component {
 
   switchUser() {
     this.setState({
-      user: this.state.user != 10 ? this.state.user + 1 : 1
+      user: this.state.user != 11 ? this.state.user + 1 : 1
     }
     , () => {
       var start = {
@@ -69,41 +75,77 @@ export default class Lock extends React.Component {
 
   }
 
+  setUser(number){
+    if((number % 1) == 0){
+      this.setState({
+        user: number
+      }
+      , () => {
+        var start = {
+          latitude: this.state.latitude,
+          longitude: this.state.longitude
+        };
+        this.getByProximity(start);
+      });
+    }
 
+  }
 
   getByProximity(startPoint) {
       var maxDistanceInKM = 0.15;
 
       // results is an array of points that are within the maxDistanceInKM
       var result = Geofence.filterByProximity(startPoint, this.state.dataSource, maxDistanceInKM); // use points, maxDistanceInKM); for testing
+      //console.log('results[0]');
+      //console.log(result[0]);
 
       // API call to see if there are any recommended meals in the results
       if (result.length > 0){
         var items =[];
-        //set a variable to be the first element of results, then use it for the call
-        fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/favmeal/meal/?uid=" + this.state.user + "&gps=0&loc_id=3") // hardcoding location for testing (3 and 4 have res), switch to current location
+        var name;
+        var photo_catogory = 'none';
+        //set a variable to be the first element of results, then use it for the call (hardcoded location for demo, real func in post-comment)
+        fetch("https://x9gctr0aac.execute-api.us-east-1.amazonaws.com/dev/api/favmeal/meal/?uid=" + this.state.user + "&gps=1" + "&lat=" + result[0].latitude + "&lng=" + result[0].longitude)
           .then(response => response.json())
           .then((responseJson)=> {
-            //console.log('\nResponse from location call');
-            //console.log(responseJson);
+            console.log('\nResponse from location call');
+            console.log(responseJson);
             if (responseJson['data']['meal']){
               items = Object.keys(responseJson['data']['meal']['contents']);
+              name = responseJson['data']['meal']['loc_name'];
+              photo_catogory = responseJson['data']['meal']['photo_catogory'];
+
+              //Store the found meal, if none store a blank array
+              AsyncStorage.setItem('fenceName', name);
+              AsyncStorage.setItem('photo_catogory', photo_catogory);
+
             }
-
-
-            console.log('items');
+            else{
+              name="NO LOCATION"
+              AsyncStorage.setItem('fenceName', 'NO LOCATION');
+              AsyncStorage.setItem('photo_catogory', 'none');
+            }
+            AsyncStorage.setItem('fence', JSON.stringify(items));
+            console.log('Storing');
+            console.log(name);
             console.log(items);
+
+
+            console.log('photo category');
+            console.log(photo_catogory);
+
+
+
+            // console.log('items');
+            // console.log(items);
             // console.log('items length');
             // console.log(items.length);
 
-            //Store the found meal, if none store a blank array
-            AsyncStorage.setItem('fence', JSON.stringify(items));
-            console.log('Storing');
-            console.log(items);
+
 
             // if rec exists for the fence were in
             if (items.length > 0){
-              console.log('Fence Triggered.');
+              console.log('Fence Active.');
               var distance = result[0].distanceInKM;
               console.log('Distance:');
               console.log(distance);
@@ -120,6 +162,7 @@ export default class Lock extends React.Component {
             }
             console.log('result length:');
             console.log(result.length);
+            console.log('\n\n');
 
 
           })
@@ -129,7 +172,9 @@ export default class Lock extends React.Component {
 
   }
 
-
+  // ************************************************************
+  // ************          Mounting   *************************
+  // ************************************************************
 
     componentDidMount() {
       //set initial position, check for fence
@@ -141,8 +186,10 @@ export default class Lock extends React.Component {
             error: null,
           });
           console.log('\n\n');
+          console.log('Current position:');
           console.log(position.coords.latitude);
           console.log(position.coords.longitude);
+          console.log('\n');
           var start = {
             latitude: this.state.latitude,
             longitude: this.state.longitude
@@ -162,8 +209,10 @@ export default class Lock extends React.Component {
             error: null,
           });
           console.log('\n\n');
+          console.log('Current position');
           console.log(position.coords.latitude);
           console.log(position.coords.longitude);
+          console.log('\n');
           var start = {
             latitude: this.state.latitude,
             longitude: this.state.longitude
@@ -175,11 +224,11 @@ export default class Lock extends React.Component {
       );
 
       //pull all fences from api
-      fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/locations/")
+      fetch("https://x9gctr0aac.execute-api.us-east-1.amazonaws.com/dev/api/locations/")
         .then(response => response.json())
         .then((responseJson)=> {
-          //console.log('\n!!!');
-          //console.log(responseJson['data'][0]['lat']);
+          //console.log('\nLocation JSON');
+          //console.log(responseJson);
           var locs = []
           for (var i = 0; i < responseJson['data'].length; i++){
             //console.log(responseJson['data'][i]['lat'], responseJson['data'][i]['lng']);
@@ -191,8 +240,8 @@ export default class Lock extends React.Component {
           this.setState({
             dataSource: locs,
           })
-           console.log('datasource -- ');
-           console.log(this.state.dataSource);
+          console.log('All Fences -- ');
+          console.log(this.state.dataSource);
         })
         .catch(error=>console.log(error)) //to catch the errors if any
 
@@ -202,31 +251,19 @@ export default class Lock extends React.Component {
       navigator.geolocation.clearWatch(this.watchId);
     }
 
-  // notification() {
-  //   if(self.state.inFence == true)
-  //   {
-  //     return(
-  //
-  //     )
-  //   }
-  //   else{
-  //     return(
-        // <Image
-        //   source={require('../assets/lock.png')}
-        //   style={styles.pickup}
-        // />
-  //     )
-  //   }
-  // }
+
+
+  // ************************************************************
+  // ************          Render   *************************
+  // ************************************************************
   render(){
     //conditionals renders
     const inFence = this.state.inFence;
     const inFenceSpoof = this.state.inFenceSpoof;
 
-    // notification
     let notification;
 
-    if (inFence || inFenceSpoof) { // add user condition here
+    if (inFence || inFenceSpoof) {
       notification =
         <TouchableOpacity
           style={styles.notificationButton}
@@ -292,11 +329,20 @@ export default class Lock extends React.Component {
         >
           <View style={styles.container}>
             {notification}
+            <Sliders
+              style={styles.slider}
+              thumbStyle={styles.sliderThumb}
+              minimumValue={1}
+              maximumValue={11}
+              step={1}
+              value={this.state.user}
+              onValueChange={value => this.setUser(value)}
+            />
             <TouchableOpacity
               style={styles.switchUser}
               onPress={() => this.switchUser()}
               underlayColor='#fff'>
-              <Text style={styles.spoofText}>{this.state.user}</Text>
+              <Text style={styles.spoofText}>User: {this.state.user}</Text>
             </TouchableOpacity>
             {spoofButton}
           </View>
@@ -355,7 +401,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   notificationButton:{
-    marginBottom: hp('45%'),
+    marginBottom: hp('40%'),
     // paddingTop:20,
     // paddingLeft:90,
     // paddingRight:90,
@@ -424,5 +470,11 @@ const styles = StyleSheet.create({
     height: 80,
     width: wp('93%'),
     resizeMode: 'stretch',
+  },
+  slider:{
+    width:wp('90%'),
+  },
+  sliderThumb:{
+    backgroundColor:'red',
   },
 });

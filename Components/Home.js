@@ -26,7 +26,7 @@ let theUsual = [
   "Medium Coke",
 ]
 
-let users = [
+let userNames = [
   "Sam",
   "Tom",
   "Ned",
@@ -42,23 +42,49 @@ let token = ""
 export default class Home extends React.Component {
 
   state = {
-      user: 'Sam', // make this a call to database to get curr user
+      user: userNames[1],
       items: [],
+      locName:"NO LOCATION",
+      photo_catogory:"none",
+      prices:[],
     };
 
   static navigationOptions = {
     headerTitle: <LogoTitle />,
   };
 
+  // ************************************************************
+  // ************        Class FUnctions   *************************
+  // ************************************************************
+
   createElementsFromList(list) {
     return(
       list.map(
         (listElement, i) =>
-          <View key={i} style={styles.info}>
-            <Text style={styles.theUsualTextStyle} allowFontScaling={false}>{listElement}</Text>
+          <View key={i} style={styles.containerHorizontalBetween}>
+            <Text style={styles.meal} adjustsFontSizeToFit={true}>{listElement}</Text>
+            <Text style={styles.price} >$XX.XX</Text>
           </View>
       )
     )
+  }
+
+  generatePrices(numItems){
+    if(numItems>0){
+      var prices = [];
+      var price = 0
+      for(i=0; i < numItems; i++){
+        prices.push(Math.random() * 10)
+      }
+      prices.push(prices.reduce((a, b) => a + b, 0))
+    }
+    console.log('prices:');
+    console.log(prices);
+
+    this.setState({
+      prices: prices,
+    });
+
   }
 
   // ************************************************************
@@ -122,6 +148,20 @@ export default class Home extends React.Component {
       })
     );
 
+    AsyncStorage.getItem('fenceName').then((value) =>
+      this.setState({
+        locName:value
+      })
+    );
+
+    AsyncStorage.getItem('photo_catogory').then((value) =>
+      this.setState({
+        photo_catogory:value
+      })
+    );
+
+    this.generatePrices(2);//this.state.items.length)
+
 
   //   var items =[];
   //   fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/favmeal/meal/?uid=3&gps=0&loc_id=3")
@@ -171,21 +211,45 @@ export default class Home extends React.Component {
 
   render(){
 
+    let image;
+
+    if(this.state.photo_catogory == "F"){
+      image =
+        <Image
+          source={require('../assets/food.png')}
+          style={styles.foodImg}
+        />
+    } else if (this.state.photo_catogory == "D"){
+      image =
+        <Image
+          source={require('../assets/drink.png')}
+          style={styles.foodImg}
+        />
+    } else {
+      image =
+        <Image
+          source={require('../assets/meal.png')}
+          style={styles.foodImg}
+        />
+    }
 
     return (
         <View style={styles.container}>
           <View>
-            <Text style={styles.h}>Welcome back {this.state.user}! {'\n'}Would you like your usual?</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit={true} style={styles.welcomeTop}>Welcome back to {this.state.locName}</Text>
+            <Text style={styles.welcomeBottom}>Would you like your usual?</Text>
           </View>
 
-          <View style={styles.container}>
-            <Image
-              source={require('../assets/food.png')}
-              style={styles.foodImg}
-            />
-            <ScrollView>
+          <View style={styles.containerBetween}>
+            {image}
+            <ScrollView style={{width: wp('100%'), flex: 1}}>
               {this.createElementsFromList(this.state.items)}
+              <View style={styles.totalContainer}>
+                <Text style={styles.total} >Total:</Text>
+                <Text style={styles.total} >$XX.XX</Text>
+              </View>
             </ScrollView>
+
           </View>
 
           <View style={styles.containerSmall}>
@@ -195,29 +259,31 @@ export default class Home extends React.Component {
                 () => this.props.navigation.navigate( 'Order' )
               }
               //onPress={() => navigate('HomeScreen')}
-              underlayColor='#fff'>
-              <Text style={styles.orderText}>Order</Text>
+              >
+              <Text style={styles.orderText}>ORDER</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.aButton}
-              //onPress={()=> this.sendPushNotification()}
-              onPress={
-                () => this.props.navigation.navigate( 'Edit' )
-                //() => this.switchUser()
-              }
-              underlayColor='#fff'>
-              <Text style={styles.aText}>Edit Order</Text>
-            </TouchableOpacity>
+            <View style={styles.containerHorizontal}>
+              <TouchableOpacity
+                style={styles.aButton}
+                //onPress={()=> this.sendPushNotification()}
+                onPress={
+                  () => this.props.navigation.navigate( 'Edit' )
+                  //() => this.switchUser()
+                }
+                >
+                <Text style={styles.aText}>Edit Order</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.aButton}
-              onPress={
-                () => this.props.navigation.navigate( 'Main' )
-              }
-              underlayColor='#fff'>
-              <Text style={styles.aText}>New Order</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.aButton}
+                onPress={
+                  () => this.props.navigation.navigate( 'Main' )
+                }
+                >
+                <Text style={styles.aText}>New Order</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
     );
@@ -232,32 +298,66 @@ export default class Home extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    //backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  containerTop: {
+    flex: 1,
+    //backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'flex-start',
+    //marginTop: hp('0.5%')
+  },
+  containerBetween: {
+    flex: 1,
+    //backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  containerHorizontalBetween: {
+    //flex: 1,
+    flexDirection: 'row',
+    //backgroundColor: 'grey',
+    justifyContent: 'flex-end',
+    width: wp('94.5%'),
+    marginTop: hp('1.5%'),
+    marginLeft: wp('5.5%'),
+    //marginRight: hp('1.5%'),
+    // borderColor: 'red',
+    // borderWidth: 3,
+    borderBottomColor: 'grey',
+    paddingBottom: hp('1%'),
+
+    borderBottomWidth: 0.25,
+
+  },
+  containerHorizontal: {
+    //flex: 1,
+    flexDirection: 'row',
+    //backgroundColor: '#fff',
+    //alignItems: 'flex-end',
+    justifyContent: 'center',
+    width: wp('100%'),
+    // borderColor: 'red',
+    // borderWidth: 3,
+
   },
   containerSmall: {
-    flex: 0.78,
+    flex: 0.35,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'flex-start',
-  },
-  info: {
-    width: wp('100%'),
-    flexDirection: 'row',
-
-    //alignItems: 'center',
   },
   theUsualTextStyle:{
     textAlign: 'center',
-    fontSize: hp('3%'),
     paddingBottom: hp('2%'),
     paddingLeft: hp('3%'),
     paddingRight: hp('3%'),
     width: 0,
     flexGrow: 1,
     flex: 1,
-
+    fontSize: hp('3%'),
     fontFamily: 'HelveticaNeue',// sans-serif,
     borderColor: 'black',
     //borderWidth: 0.2,
@@ -271,12 +371,24 @@ const styles = StyleSheet.create({
     borderBottomColor: '#D3D3D3',
     borderBottomWidth: 0.5,
   },
-  h:{
+  welcomeTop:{
+    fontWeight: '200',
     fontSize: hp('2.5%'),
     fontFamily: 'HelveticaNeue-UltraLight',// sans-serif,
     //backgroundColor: "grey",
-    marginTop: hp('2%'),
+    marginTop: hp('0.5%'),
+    marginLeft: wp('4%'),
+    marginRight: wp('4%'),
     textAlign: 'center',
+
+  },
+  welcomeBottom:{
+    fontSize: hp('2.7%'),
+    marginTop: hp('0.8%'),
+    fontFamily: 'HelveticaNeue-UltraLight',// sans-serif,
+    //backgroundColor: "grey",
+    textAlign: 'center',
+
   },
   logo:{
     height: hp('2%'),
@@ -286,19 +398,24 @@ const styles = StyleSheet.create({
     //backgroundColor: "blue",
   },
   foodImg:{
-    height: hp('28%'),
-    width: hp('28%'),
-    marginTop: hp('1%'),
+    flex: 1,
+    height: hp('27%'),
+    width: wp('100%'),
+    marginTop: hp('0.8%'),
+    //marginBottom: hp('2.2%'),
+    resizeMode: 'contain',
+
+
     //marginBottom: hp('0.2%'),
     //backgroundColor: "blue",
 
   },
   orderButton:{
-    marginTop:hp('1.5%'),
-    paddingTop:hp('4%'),
-    paddingLeft:wp('33%'),
-    paddingRight:wp('33%'),
-    paddingBottom:hp('4%'),
+    //marginTop:hp('1.5%'),
+    paddingTop:hp('2%'),
+    paddingLeft:wp('27%'),
+    paddingRight:wp('27%'),
+    paddingBottom:hp('2%'),
     backgroundColor:'#ffc300',
     borderRadius:10,
     shadowColor: '#000',
@@ -311,18 +428,72 @@ const styles = StyleSheet.create({
   orderText:{
       color:'#fff',
       textAlign:'center',
-      color:'black',
+      color:'white',
+      fontWeight: '900',
       fontSize: hp('4.1%'),
+      letterSpacing: wp('2%'),
 
   },
   aButton:{
-    marginTop:hp('3%'),
+    marginTop:hp('2.3'),
+    marginLeft: wp('1.5%'),
+    marginRight:wp('1.5%'),
+    paddingTop: hp('0.5%'),
+    paddingBottom: hp('0.5%'),
+    paddingLeft: wp('9%'),
+    paddingRight: wp('9%'),
+    borderColor:'#ffc300',
+    borderWidth: 2,
+    borderRadius:10,
   },
   aText:{
-      color:'#fff',
+      color:'#ffc300',
       textAlign:'center',
-      color:'black',
       fontSize:hp('2.5%'),
-      textDecorationLine: 'underline',
+      fontWeight: '600',
+      //textDecorationLine: 'underline',
+  },
+  meal:{
+    flex: 0.7,
+    fontSize: hp('2.3%'),
+    fontFamily: 'System',// sans-serif,
+    textAlign: 'left',
+    fontWeight: '900',
+    alignSelf: 'center',
+    // backgroundColor: "grey",
+    // borderColor: 'black',
+    // borderWidth: 1,
+
+    //marginLeft: wp('6%'),
+  },
+  price:{
+    flex: 0.3,
+    fontSize: hp('2.3%'),
+    fontFamily: 'System',// sans-serif,
+    textAlign: 'right',
+    alignSelf: 'center',
+    fontWeight:'400',
+
+    //backgroundColor: "red",
+    marginRight: wp('6%')
+  },
+  total:{
+    //flex: 0.3,
+    fontSize: hp('2.3%'),
+    fontFamily: 'HelveticaNeue',// sans-serif,
+    //marginLeft: wp('6%'),
+    marginRight: wp('6%'),
+    fontWeight: '400',
+    //marginRight: wp('6%')
+  },
+  totalContainer: {
+    //flex: 1,
+    flexDirection: 'row',
+    //backgroundColor: 'grey',
+    justifyContent: 'space-between',
+    width: wp('94.5%'),
+    marginLeft: wp('5.5%'),
+    marginTop: hp('3%'),
+
   },
 });

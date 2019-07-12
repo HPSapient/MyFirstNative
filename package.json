@@ -8,6 +8,7 @@
     "eject": "expo eject"
   },
   "dependencies": {
+    "@react-native-community/slider": "^2.0.0-rc.1",
     "expo": "^33.0.0",
     "expo-location": "~5.0.1",
     "expo-permissions": "~5.0.1",
@@ -18,6 +19,7 @@
     "react-native-background-geolocation": "^3.0.7",
     "react-native-expo-geofence": "^0.2.0",
     "react-native-responsive-screen": "^1.2.2",
+    "react-native-slider": "^0.11.0",
     "react-native-web": "^0.11.4",
     "react-navigation": "^3.11.0",
     "yarn": "^1.16.0"
