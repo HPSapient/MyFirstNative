@@ -8,7 +8,9 @@ import{
   Button,
   TouchableOpacity,
   AsyncStorage,
-  StatusBar } from 'react-native';
+  StatusBar,
+  Animated,
+  } from 'react-native';
   import { Notifications } from 'expo';
   import * as Permissions from 'expo-permissions';
 
@@ -47,8 +49,21 @@ export default class Lock extends React.Component {
       inFenceSpoof: false,
       user: 1,
       dataSource:[],
+      fadeValue: new Animated.Value(0),
 
     };
+
+    _start = () => {
+      Animated.spring(this.state.fadeValue, {
+        toValue: 1,
+      }).start();
+    }
+    _reverse = () => {
+      Animated.spring(this.state.fadeValue, {
+        toValue: 0,
+      }).start();
+    }
+
 
     // ************************************************************
     // ************          Class functions   *******************
@@ -121,8 +136,8 @@ export default class Lock extends React.Component {
 
             }
             else{
-              name="NO LOCATION"
-              AsyncStorage.setItem('fenceName', 'NO LOCATION');
+              name="no location"
+              AsyncStorage.setItem('fenceName', name);
               AsyncStorage.setItem('photo_catogory', 'none');
             }
             AsyncStorage.setItem('fence', JSON.stringify(items));
@@ -177,6 +192,7 @@ export default class Lock extends React.Component {
   // ************************************************************
 
     componentDidMount() {
+
       //set initial position, check for fence
       navigator.geolocation.getCurrentPosition(
         (position) => {
@@ -251,6 +267,15 @@ export default class Lock extends React.Component {
       navigator.geolocation.clearWatch(this.watchId);
     }
 
+    componentDidUpdate(){
+      if(this.state.inFence || this.state.inFenceSpoof){
+        this._start();
+      }
+      else{
+        this._reverse();
+      }
+    }
+
 
 
   // ************************************************************
@@ -265,32 +290,38 @@ export default class Lock extends React.Component {
 
     if (inFence || inFenceSpoof) {
       notification =
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={
-            () => this.props.navigation.navigate( 'Home' )
-          }
-          //onPress={() => navigate('HomeScreen')}
-          underlayColor='#fff'>
-          <ImageBackground
-            source={require('../assets/notification.png')}
-            style={styles.note}
-          >
-            <View style={styles.containerVerticalTopLeft}>
-              <View style={styles.containerHorizontal}>
-                <Image
-                  source={require('../assets/arch.png')}
-                  style={{ width: 25, height: 25, marginLeft: 12, marginTop: 2, }}
-                />
-                <Text style={styles.noteTopText}>McDonalds</Text>
+        <Animated.View
+          style={{
+            opacity: this.state.fadeValue
+          }}
+        >
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={
+              () => this.props.navigation.navigate( 'Home' )
+            }
+            //onPress={() => navigate('HomeScreen')}
+            underlayColor='#fff'>
+            <ImageBackground
+              source={require('../assets/notification.png')}
+              style={styles.note}
+            >
+              <View style={styles.containerVerticalTopLeft}>
+                <View style={styles.containerHorizontal}>
+                  <Image
+                    source={require('../assets/arch.png')}
+                    style={{ width: 25, height: 25, marginLeft: 12, marginTop: 2, }}
+                  />
+                  <Text style={styles.noteTopText}>McDonalds</Text>
+                </View>
+                <Text style={styles.noteMiddleText}>Welcome Back!</Text>
+                <Text style={styles.noteBottomText}>Would you like the usual?</Text>
               </View>
-              <Text style={styles.noteMiddleText}>Welcome Back!</Text>
-              <Text style={styles.noteBottomText}>Would you like the usual?</Text>
-            </View>
 
 
-          </ImageBackground>
-        </TouchableOpacity>;
+            </ImageBackground>
+          </TouchableOpacity>
+        </Animated.View>;
     } else {
       notification = <View/>
     }
@@ -318,6 +349,7 @@ export default class Lock extends React.Component {
           <Text style={styles.spoofText}>Spoof Fence</Text>
         </TouchableOpacity>;
     }
+
 
     // renders this
     return (
@@ -349,6 +381,7 @@ export default class Lock extends React.Component {
         </ImageBackground>
       </View>
     );
+
   }
 
 }

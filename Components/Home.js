@@ -8,13 +8,17 @@ import{
   TouchableOpacity,
   ScrollView,
   AsyncStorage,
-  StatusBar } from 'react-native';
-  import { Notifications, Location, TaskManager } from 'expo';
-  import * as Permissions from 'expo-permissions';
+  StatusBar,
+  Animated,
+} from 'react-native';
+import { Notifications, Location, TaskManager } from 'expo';
+import * as Permissions from 'expo-permissions';
 
-  import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
+import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 
-  import LogoTitle from './Header'
+import LogoTitle from './Header'
+
+import Swipeable from 'react-native-swipeable-row';
 
 
 // ************************************************************
@@ -44,10 +48,19 @@ export default class Home extends React.Component {
   state = {
       user: userNames[1],
       items: [],
-      locName:"NO LOCATION",
+      locName:"no location",
       photo_catogory:"none",
       prices:[],
+      total:0,
+      marginValue: new Animated.Value(hp('5%')),
+      isSwiping: true,
     };
+
+    _start = () => {
+      Animated.spring(this.state.marginValue, {
+        toValue: 0,
+      }).start();
+    }
 
   static navigationOptions = {
     headerTitle: <LogoTitle />,
@@ -57,35 +70,55 @@ export default class Home extends React.Component {
   // ************        Class FUnctions   *************************
   // ************************************************************
 
-  createElementsFromList(list) {
-    return(
-      list.map(
-        (listElement, i) =>
-          <View key={i} style={styles.containerHorizontalBetween}>
-            <Text style={styles.meal} adjustsFontSizeToFit={true}>{listElement}</Text>
-            <Text style={styles.price} >$XX.XX</Text>
-          </View>
-      )
-    )
-  }
-
-  generatePrices(numItems){
-    if(numItems>0){
+  generatePrices(){
+    if(this.state.items != null){
+      console.log('items.length');
+      console.log(this.state.items.length);
       var prices = [];
-      var price = 0
-      for(i=0; i < numItems; i++){
-        prices.push(Math.random() * 10)
-      }
-      prices.push(prices.reduce((a, b) => a + b, 0))
-    }
-    console.log('prices:');
-    console.log(prices);
 
-    this.setState({
-      prices: prices,
-    });
+      for (i=0;i<this.state.items.length;i++){
+        prices.push((Math.random() * 10).toFixed(2));
+      }
+      console.log('prices');
+      console.log(prices);
+      this.setState({
+        prices: prices,
+        total: (prices.reduce((a, b) => parseFloat(a) + parseFloat(b), 0)).toFixed(2),
+      })
+    }
 
   }
+
+  createElementsFromList(list) {
+    if(list !=null){
+      let rightButtons = [
+        <TouchableOpacity style={styles.swipeButton} onPress={this.removeItem()}>
+          <Text style={styles.swipeText}>remove</Text>
+        </TouchableOpacity>,
+      ];
+
+      return(
+        list.map(
+          (listElement, i) =>
+            <Swipeable key={i} style={styles.swipe} rightButtons={rightButtons} onSwipeStart={() => this.setState({isSwiping: true})}
+              onSwipeRelease={() => this.setState({isSwiping: false})}>
+              <View style={styles.containerHorizontalBetween}>
+                <Text style={styles.meal} adjustsFontSizeToFit={true}>{listElement}</Text>
+                <Text style={styles.price} >${this.state.prices[i]}</Text>
+              </View>
+            </Swipeable>
+        )
+      )
+    }
+
+  }
+
+  removeItem() {
+    console.log('pressed')
+    // let filteredArray = this.state.items.filter(item => item !== "Large Chocolate Milk")
+    // this.setState({items: filteredArray});
+  }
+
 
   // ************************************************************
   // ************          Launching   *************************
@@ -137,16 +170,19 @@ export default class Home extends React.Component {
   // ************          Rendering   *************************
   // ************************************************************
   async componentDidMount(){
+
     await this.registerForPushNotificationsAsync();
     await this.registerForLocationsAsync();
 
+
     //replace by storing meal locally on lock
     console.log('retrieving');
-    AsyncStorage.getItem('fence').then((value) =>
+    await AsyncStorage.getItem('fence').then((value) =>
       this.setState({
         items:JSON.parse(value),
-      })
+      }),
     );
+    this.generatePrices();
 
     AsyncStorage.getItem('fenceName').then((value) =>
       this.setState({
@@ -160,28 +196,12 @@ export default class Home extends React.Component {
       })
     );
 
-    this.generatePrices(2);//this.state.items.length)
+    this.generatePrices();
 
+  }
 
-  //   var items =[];
-  //   fetch("https://t9litrciwd.execute-api.us-east-1.amazonaws.com/dev/api/favmeal/meal/?uid=3&gps=0&loc_id=3")
-  //     .then(response => response.json())
-  //     .then((responseJson)=> {
-  //       //console.log('\nResponse from location call');
-  //       //console.log(responseJson);
-  //       if (responseJson['data']['meal']){
-  //         items = Object.keys(responseJson['data']['meal']['contents']);
-  //       }
-  //
-  //       console.log('Home: items');
-  //       console.log(items);
-  //
-  //       //testing itemStore
-  //
-  //
-  //     })
-  //     .catch(error=>console.log(error))
-  //
+  componentDidUpdate(){
+    this._start();
   }
 
   sendPushNotification = () => {
@@ -200,18 +220,18 @@ export default class Home extends React.Component {
     });
   };
 
-//Dep: pre nav header
-  // <View style={styles.header}>
-  //   <Image
-  //     source={require('../assets/arch.png')}
-  //     style={styles.logo}
-  //   />
-  // </View>
+
 
 
   render(){
 
+
     let image;
+    image =
+      <Image
+        source={require('../assets/arch.png')}
+        style={styles.foodImg}
+      />
 
     if(this.state.photo_catogory == "F"){
       image =
@@ -225,12 +245,18 @@ export default class Home extends React.Component {
           source={require('../assets/drink.png')}
           style={styles.foodImg}
         />
-    } else {
+    } else if (this.state.photo_catogory == "FD" || this.state.photo_catogory == "DF"){
       image =
         <Image
           source={require('../assets/meal.png')}
           style={styles.foodImg}
         />
+    } else {
+      image = <View style={styles.foodImg}/>
+        // <Image
+        //   source={require('../assets/arch.png')}
+        //   style={styles.foodImg}
+        // />
     }
 
     return (
@@ -242,13 +268,13 @@ export default class Home extends React.Component {
 
           <View style={styles.containerBetween}>
             {image}
-            <ScrollView style={{width: wp('100%'), flex: 1}}>
+            <Animated.ScrollView scrollEnabled={this.state.isSwiping} style={{width: wp('100%'), flex: 1, marginTop: this.state.marginValue}}>
               {this.createElementsFromList(this.state.items)}
               <View style={styles.totalContainer}>
                 <Text style={styles.total} >Total:</Text>
-                <Text style={styles.total} >$XX.XX</Text>
+                <Text style={styles.total} >${this.state.total}</Text>
               </View>
-            </ScrollView>
+            </Animated.ScrollView>
 
           </View>
 
@@ -376,7 +402,7 @@ const styles = StyleSheet.create({
     fontSize: hp('2.5%'),
     fontFamily: 'HelveticaNeue-UltraLight',// sans-serif,
     //backgroundColor: "grey",
-    marginTop: hp('0.5%'),
+    marginTop: hp('1.5%'),
     marginLeft: wp('4%'),
     marginRight: wp('4%'),
     textAlign: 'center',
@@ -494,6 +520,22 @@ const styles = StyleSheet.create({
     width: wp('94.5%'),
     marginLeft: wp('5.5%'),
     marginTop: hp('3%'),
+
+  },
+  swipe:{
+
+  },
+  swipeButton:{
+    backgroundColor: 'red',
+    flex: 1,
+    justifyContent: 'center',
+
+  },
+  swipeText:{
+    position: 'relative',
+    color: 'white',
+    fontWeight: '700',
+    marginLeft: wp('3.4%'),
 
   },
 });
